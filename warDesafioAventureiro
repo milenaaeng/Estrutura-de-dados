@@ -1,0 +1,165 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+/* 
+    Struct Territorio
+    Representa os dados básicos de um território no jogo WAR.
+*/
+typedef struct {
+    char nome[30];
+    char cor[10];
+    int tropas;
+} Territorio;
+
+/* --- PROTÓTIPOS --- */
+void cadastrarTerritorios(Territorio* mapa, int qtd);
+void exibirTerritorios(Territorio* mapa, int qtd);
+void atacar(Territorio* atacante, Territorio* defensor);
+void liberarMemoria(Territorio* mapa);
+
+
+int main() {
+
+    srand(time(NULL)); // Garante aleatoriedade
+
+    int qtd;
+    printf("Digite a quantidade de territorios: ");
+    scanf("%d", &qtd);
+
+    // Alocação dinâmica
+    Territorio* mapa = (Territorio*) calloc(qtd, sizeof(Territorio));
+
+    if (mapa == NULL) {
+        printf("Erro na alocacao de memoria!\n");
+        return 1;
+    }
+
+    cadastrarTerritorios(mapa, qtd);
+
+    int atacante, defensor;
+
+    while (1) {
+        printf("\n===== MENU DE ATAQUE =====\n");
+        printf("Digite o indice do territorio atacante (-1 para sair): ");
+        scanf("%d", &atacante);
+
+        if (atacante == -1)
+            break;
+
+        printf("Digite o indice do territorio defensor: ");
+        scanf("%d", &defensor);
+
+        // validações
+        if (atacante < 0 || atacante >= qtd || defensor < 0 || defensor >= qtd) {
+            printf("Indice invalido!\n");
+            continue;
+        }
+
+        if (strcmp(mapa[atacante].cor, mapa[defensor].cor) == 0) {
+            printf("Nao e possivel atacar um territorio da mesma cor!\n");
+            continue;
+        }
+
+        if (mapa[atacante].tropas <= 0) {
+            printf("O atacante nao tem tropas suficientes!\n");
+            continue;
+        }
+
+        atacar(&mapa[atacante], &mapa[defensor]);
+        exibirTerritorios(mapa, qtd);
+    }
+
+    liberarMemoria(mapa);
+
+    return 0;
+}
+
+
+/* 
+    Cadastro dos territórios usando ponteiros
+*/
+void cadastrarTerritorios(Territorio* mapa, int qtd) {
+
+    printf("\n===== CADASTRO DE TERRITORIOS =====\n\n");
+
+    for (int i = 0; i < qtd; i++) {
+        printf("Territorio %d\n", i);
+
+        printf("Nome: ");
+        scanf("%s", mapa[i].nome);
+
+        printf("Cor do exercito: ");
+        scanf("%s", mapa[i].cor);
+
+        printf("Tropas: ");
+        scanf("%d", &mapa[i].tropas);
+
+        printf("-----------------------------\n");
+    }
+}
+
+/*
+    Exibe todos os territórios cadastrados
+*/
+void exibirTerritorios(Territorio* mapa, int qtd) {
+    printf("\n===== ESTADO ATUAL DO MAPA =====\n");
+
+    for (int i = 0; i < qtd; i++) {
+        printf("Territorio %d:\n", i);
+        printf("Nome: %s\n", mapa[i].nome);
+        printf("Cor: %s\n", mapa[i].cor);
+        printf("Tropas: %d\n", mapa[i].tropas);
+        printf("-----------------------------\n");
+    }
+}
+
+/*
+    Função de ATAQUE
+    - Simula um dado para cada lado (1 a 6)
+    - Atualiza cor e tropas do defensor se perder
+    - Atacante perde 1 tropa se perder
+*/
+void atacar(Territorio* atacante, Territorio* defensor) {
+
+    int dadoA = rand() % 6 + 1;
+    int dadoD = rand() % 6 + 1;
+
+    printf("\n===== ATAQUE =====\n");
+    printf("%s (%s) atacou %s (%s)\n",
+           atacante->nome, atacante->cor,
+           defensor->nome, defensor->cor);
+
+    printf("Dado atacante: %d\n", dadoA);
+    printf("Dado defensor: %d\n", dadoD);
+
+    if (dadoA > dadoD) {
+        printf("O atacante VENCEU!\n");
+
+        // defensor muda de dono
+        strcpy(defensor->cor, atacante->cor);
+
+        // defensor recebe metade das tropas do atacante
+        defensor->tropas = atacante->tropas / 2;
+
+        printf("O territorio %s foi conquistado!\n", defensor->nome);
+
+    } else {
+        printf("O defensor resistiu ao ataque!\n");
+
+        // atacante perde 1 tropa
+        atacante->tropas--;
+
+        if (atacante->tropas < 0)
+            atacante->tropas = 0;
+    }
+}
+
+/*
+    Libera memória alocada dinamicamente
+*/
+void liberarMemoria(Territorio* mapa) {
+    free(mapa);
+    printf("\nMemoria liberada com sucesso!\n");
+}
